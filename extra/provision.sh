@@ -290,7 +290,6 @@ fi
     if [[ "$MULTIPLE_SERVERS" == false || "$SERVER_TYPE" = "nginx" ]]; then
         # Packages to be installed in Dev mode
         if [[ "$MODE" == "dev" ]]; then
-            package build-essential
             package libssl-dev
             package python-all-dev
             package python-setuptools
@@ -301,8 +300,11 @@ fi
             sudo -H pip install mycli
             package emacs
             package htop
+        else
+            package python
         fi
 
+        package build-essential
         package ca-certificates
 
         install_nodejs
@@ -319,7 +321,7 @@ fi
         install_nginx "$CTF_PATH" "$MODE" "$TYPE" "$EMAIL" "$DOMAIN" "$DOCKER" "$MULTIPLE_SERVERS" "$HHVM_SERVER"
 
         log "Installing unison 2.48.3. Remember to install the same version on your host machine"
-        package xz-utils
+        package zstd
         install_unison
     fi
 
@@ -361,7 +363,7 @@ if [[ "$MULTIPLE_SERVERS" == false || "$SERVER_TYPE" = "mysql" ]]; then
 
         sudo sed -e '/^bind-address/ s/^#*/#/' -i /etc/mysql/mysql.conf.d/mysqld.cnf
         sudo sed -e '/^skip-external-locking/ s/^#*/#/' -i /etc/mysql/mysql.conf.d/mysqld.cnf
-	fi
+    fi
 
     # Database creation
     log "Creating database"
