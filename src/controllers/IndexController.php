@@ -365,7 +365,7 @@ class IndexController extends Controller {
 
     if ($registration_type->getValue() === '2') {
       $token_field =
-        <div class="form-el el--text">
+        <div class="form-el el--text el--token">
           <label for="">{tr('Token')}</label>
           <input autocomplete="off" name="token" type="text" />
         </div>;
@@ -453,7 +453,7 @@ class IndexController extends Controller {
           </fieldset>
           <br /><br />
           <fieldset class="form-set fb-container container--small">
-            <div class="form-el el--text">
+            <div class="form-el el--text el--name">
               <label for="">{tr('Team Name')}</label>
               <input
                 autocomplete="off"
@@ -464,11 +464,43 @@ class IndexController extends Controller {
               />
               {$ldap_domain_suffix}
             </div>
-            <div class="form-el el--text">
+            <div id="name_error" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">Please check team name</h6>
+            </div>
+            <div class="form-el el--text el--password">
               <label for="">{tr('Password')}</label>
               <input autocomplete="off" name="password" type="password" />
             </div>
+            <div id="pw_error" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">Please enter a password</h6>
+            </div>
+            <div id="strong_pw" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <ul>
+                <li>• Passwords must be at least 12 characters.</li>
+                <li>• Use upper and lower case letters.</li>
+                <li>• Use at least one number.</li>
+              </ul>
+            </div>
+            <div class="form-el el--text el--password">
+              <label for="">{tr('Confirm Password')}</label>
+              <input autocomplete="off" name="confirm_password" type="password" />
+            </div>
+            <div id="confirm_error" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">Passwords do not match</h6>
+            </div>
+            <div id="password_error" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">{tr('Password is too simple')}</h6>
+            </div>
             {$token_field}
+            <div id="token_error" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">Please check token</h6>
+            </div>
           </fieldset>
           <div class="fb-choose-emblem">
             <h6>{tr('Choose an Emblem')}</h6>
@@ -579,7 +611,7 @@ class IndexController extends Controller {
 
     if ($registration_type->getValue() === '2') {
       $token_field =
-        <div class="form-el el--text">
+        <div class="form-el el--text el--token">
           <label for="">{tr('Token')}</label>
           <input autocomplete="off" name="token" type="text" />
         </div>;
@@ -663,7 +695,7 @@ class IndexController extends Controller {
         <form class="fb-form">
           <input type="hidden" name="action" value="register_team" />
           <fieldset class="form-set fb-container container--small">
-            <div class="form-el el--text">
+            <div class="form-el el--text el--name">
               <label for="">{tr('Team Name')}</label>
               <input
                 autocomplete="off"
@@ -674,15 +706,43 @@ class IndexController extends Controller {
               />
               {$ldap_domain_suffix}
             </div>
-            <div class="form-el el--text">
+            <div id="name_error" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">Please check team name</h6>
+            </div>
+            <div class="form-el el--text el--password">
               <label for="">{tr('Password')}</label>
               <input autocomplete="off" name="password" type="password" />
             </div>
-            <div id="password_error" class="el--text completely-hidden">
+            <div id="pw_error" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">Please enter a password</h6>
+            </div>
+            <div id="strong_pw" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <ul>
+                <li>• Passwords must be at least 12 characters.</li>
+                <li>• Use upper and lower case letters.</li>
+                <li>• Use at least one number.</li>
+              </ul>
+            </div>
+            <div class="form-el el--text el--password">
+              <label for="">{tr('Confirm Password')}</label>
+              <input autocomplete="off" name="confirm_password" type="password" />
+            </div>
+            <div id="confirm_error" class="form-el el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">Passwords do not match</h6>
+            </div>
+            <div id="password_error" class="form-el el--text completely-hidden">
               <label for=""></label>
               <h6 style="color:red;">{tr('Password is too simple')}</h6>
             </div>
             {$token_field}
+            <div id="token_error" class="el--text completely-hidden">
+              <label for=""></label>
+              <h6 style="color:red;">Please check token</h6>
+            </div>
           </fieldset>
           <div class="fb-choose-emblem">
             <h6>{tr('Choose an Emblem')}</h6>
@@ -1001,9 +1061,8 @@ class IndexController extends Controller {
         $login_select = "on";
         $login_team = <select name="team_id" />;
         $login_team->appendChild(<option value="0">{tr('Select')}</option>);
-        $all_active_teams = await MultiTeam::genAllActiveTeams();
+        $all_active_teams = await MultiTeam::genAllActiveTeams(false, true);
         foreach ($all_active_teams as $team) {
-          error_log('Getting '.$team->getName());
           $login_team->appendChild(
             <option value={strval($team->getId())}>
               {$team->getName()}

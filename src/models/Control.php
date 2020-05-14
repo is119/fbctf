@@ -67,19 +67,19 @@ class Control extends Model {
   public static async function genBegin(): Awaitable<void> {
     await \HH\Asio\va(
       Announcement::genDeleteAll(), // Clear announcements log
-      ActivityLog::genDeleteAll(), // Clear activity log
       Team::genResetAllPoints(), // Reset all points
       ScoreLog::genResetScores(), // Clear scores log
       HintLog::genResetHints(), // Clear hints log
       FailureLog::genResetFailures(), // Clear failures log
       self::genResetBases(), // Clear bases log
+      Control::genFlushMemcached(), // Flush Memcached
       self::genClearScriptLog(),
       Configuration::genUpdate('registration', '0'), // Disable registration
+      Configuration::genUpdate('login', '1'), // Enable login
     );
 
     await \HH\Asio\va(
       Announcement::genCreateAuto('Game has started!'), // Announce game starting
-      ActivityLog::genCreateGenericLog('Game has started!'), // Log game starting
       Configuration::genUpdate('game', '1'), // Mark game as started
       Configuration::genUpdate('scoring', '1'), // Enable scoring
     );
@@ -138,7 +138,6 @@ class Control extends Model {
   public static async function genEnd(): Awaitable<void> {
     await \HH\Asio\va(
       Announcement::genCreateAuto('Game has ended!'), // Announce game ending
-      ActivityLog::genCreateGenericLog('Game has ended!'), // Log game ending
       Configuration::genUpdate('game', '0'), // Mark game as finished and stop progressive scoreboard
       Configuration::genUpdate('scoring', '0'), // Disable scoring
       Configuration::genUpdate('start_ts', '0'), // Put timestamps to zero
@@ -164,7 +163,6 @@ class Control extends Model {
   public static async function genPause(): Awaitable<void> {
     await \HH\Asio\va(
       Announcement::genCreateAuto('Game has been paused!'), // Announce game paused
-      ActivityLog::genCreateGenericLog('Game has been paused!'), // Log game paused
       Configuration::genUpdate('scoring', '0'), // Disable scoring
     );
 
@@ -204,7 +202,6 @@ class Control extends Model {
       Progressive::genRun(), // Kick off progressive scoreboard
       Level::genBaseScoring(), // Kick off scoring for bases
       Announcement::genCreateAuto('Game has resumed!'), // Announce game resumed
-      ActivityLog::genCreateGenericLog('Game has resumed!'), // Log game resumed
     );
   }
 
@@ -436,10 +433,10 @@ class Control extends Model {
     };
     $awaitables_results = await \HH\Asio\m($awaitables);
 
-    $game['logos'] = $awaitables['logos'];
-    $game['teams'] = $awaitables['teams'];
-    $game['categories'] = $awaitables['categories'];
-    $game['levels'] = $awaitables['levels'];
+    $game['logos'] = $awaitables_results['logos'];
+    $game['teams'] = $awaitables_results['teams'];
+    $game['categories'] = $awaitables_results['categories'];
+    $game['levels'] = $awaitables_results['levels'];
 
     $output_file = 'fbctf_game.json';
     JSONExporterController::sendJSON($game, $output_file);
@@ -492,26 +489,6 @@ class Control extends Model {
     $cmd = Db::getInstance()->getBackupCmd().' | gzip --best';
     passthru($cmd);
     exit();
-  }
-
-  public static async function genAllActivity(
-    bool $refresh = false,
-  ): Awaitable<Vector<Map<string, string>>> {
-    $mc_result = self::getMCRecords('ALL_ACTIVITY');
-    if (!$mc_result || count($mc_result) === 0 || $refresh) {
-      $db = await self::genDb();
-      $result =
-        await $db->queryf(
-          'SELECT scores_log.ts AS time, teams.name AS team, countries.iso_code AS country, scores_log.team_id AS team_id FROM scores_log, levels, teams, countries WHERE scores_log.level_id = levels.id AND levels.entity_id = countries.id AND scores_log.team_id = teams.id AND teams.visible = 1 ORDER BY time DESC LIMIT 50',
-        );
-      self::setMCRecords('ALL_ACTIVITY', $result->mapRows());
-      return $result->mapRows();
-    }
-    invariant(
-      $mc_result instanceof Vector,
-      'cache return should be of type Vector',
-    );
-    return $mc_result;
   }
 
   public static async function genResetBases(): Awaitable<void> {

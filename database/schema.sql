@@ -35,9 +35,10 @@ DROP TABLE IF EXISTS `levels`;
 CREATE TABLE `levels` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `active` tinyint(1) NOT NULL,
-  `type` varchar(4) NOT NULL,
+  `type` varchar(7) NOT NULL,
   `title` varchar(255) NOT NULL,
   `description` text NOT NULL,
+  `choices` text NULL,
   `entity_id` int(11) NOT NULL,
   `category_id` int(11) NOT NULL,
   `points` int(11) NOT NULL,
@@ -73,6 +74,7 @@ CREATE TABLE `categories` (
 LOCK TABLES `categories` WRITE;
 INSERT INTO `categories` (category, created_ts, protected) VALUES("None", NOW(), 1);
 INSERT INTO `categories` (category, created_ts, protected) VALUES("Quiz", NOW(), 1);
+INSERT INTO `categories` (category, created_ts, protected) VALUES("Multiple Choice", NOW(), 1);
 UNLOCK TABLES;
 
 --
@@ -90,6 +92,9 @@ CREATE TABLE `attachments` (
   `created_ts` timestamp NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+-- Temp Fix by having a dummy row to prevent constant SELECT queries
+INSERT INTO attachments (filename, type, level_id, created_ts) VALUES ("test", "text/plain", 0, NOW());
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -257,8 +262,8 @@ INSERT INTO `configuration` (field, value, description) VALUES("login_strongpass
 INSERT INTO `configuration` (field, value, description) VALUES("login_facebook", "0", "(Boolean) Allow Facebook Login");
 INSERT INTO `configuration` (field, value, description) VALUES("login_google", "0", "(Boolean) Allow Google Login");
 INSERT INTO `configuration` (field, value, description) VALUES("password_type", "1", "(Integer) Type of passwords: See table password_types");
-INSERT INTO `configuration` (field, value, description) VALUES("default_bonus", "30", "(Integer) Default value for bonus in levels");
-INSERT INTO `configuration` (field, value, description) VALUES("default_bonusdec", "10", "(Integer) Default bonus decrement in levels");
+INSERT INTO `configuration` (field, value, description) VALUES("default_bonus", "0", "(Integer) Default value for bonus in levels");
+INSERT INTO `configuration` (field, value, description) VALUES("default_bonusdec", "0", "(Integer) Default bonus decrement in levels");
 INSERT INTO `configuration` (field, value, description) VALUES("language", "en", "(String) Language of the system");
 INSERT INTO `configuration` (field, value, description) VALUES("livesync", "0", "(Boolean) LiveSync functionality");
 INSERT INTO `configuration` (field, value, description) VALUES("livesync_auth_key", "", "(String) Optional LiveSync Auth Key");
@@ -286,10 +291,7 @@ CREATE TABLE `password_types` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 LOCK TABLES `password_types` WRITE;
-INSERT INTO `password_types` (field, value, description) VALUES("1", "/.+/", "Length > 0");
-INSERT INTO `password_types` (field, value, description) VALUES("2", "/.*^(?=.{8,})(?=.*[a-z])(?=.*[0-9]).*$/", "Length > 8, [a-z] and [0-9]");
-INSERT INTO `password_types` (field, value, description) VALUES("3", "/.*^(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$/", "Length > 8, [a-z], [A-Z] and [0-9]");
-INSERT INTO `password_types` (field, value, description) VALUES("4", "/.*^(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[\\W]+).*$/", "Length > 8, [a-z], [A-Z], [0-9] and Special chars");
+INSERT INTO `password_types` (field, value, description) VALUES("1", "/.*^(?=.{12,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$/", "Length >= 12, [a-z], [A-Z] and [0-9]");
 
 UNLOCK TABLES;
 
@@ -344,7 +346,7 @@ CREATE TABLE `scores_log` (
   `team_id` int(11) NOT NULL,
   `points` int(11) NOT NULL,
   `level_id` int(11) NOT NULL,
-  `type` varchar(4) NOT NULL,
+  `type` varchar(7) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `level_id` (`level_id`),
   KEY `team_id` (`team_id`)
@@ -428,7 +430,6 @@ CREATE TABLE `hints_log` (
   KEY `team_id` (`team_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
 
 --
 -- Table structure for table `progressive_log`

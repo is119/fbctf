@@ -31,9 +31,7 @@ class CountryDataController extends DataController {
           $level->getId(),
         ),
         'links_list' => Link::genAllLinksValues($level->getId()),
-        'completed_by' => MultiTeam::genCompletedLevelTeamNames(
-          $level->getId(),
-        ),
+        'completed' => MultiTeam::genCompletedLevel($level->getId(),),
       };
       $awaitables_results = await \HH\Asio\m($awaitables); // TODO: Combine Awaits
 
@@ -41,7 +39,7 @@ class CountryDataController extends DataController {
       $category = $awaitables_results['category'];
       $attachments_list = $awaitables_results['attachments_list'];
       $links_list = $awaitables_results['links_list'];
-      $completed_by = $awaitables_results['completed_by'];
+      $completed = $awaitables_results['completed'];
 
       invariant(
         $country instanceof Country,
@@ -51,10 +49,6 @@ class CountryDataController extends DataController {
         $category instanceof Category,
         'category should be of type Category',
       );
-
-      if (!$country) {
-        continue;
-      }
 
       if ($level->getHint() !== '') {
         // There is hint, can this team afford it?
@@ -89,7 +83,7 @@ class CountryDataController extends DataController {
       }
 
       // Who is the first owner of this level
-      if ($completed_by) {
+      if ($completed) {
         $owner = await MultiTeam::genFirstCapture($level->getId()); // TODO: Combine Awaits
         $owner = $owner->getName();
       } else {
@@ -99,12 +93,13 @@ class CountryDataController extends DataController {
         'level_id' => $level->getId(),
         'title' => $level->getTitle(),
         'intro' => $level->getDescription(),
+        'choices' => $level->getMChoice(),
         'type' => $level->getType(),
         'points' => $level->getPoints(),
         'bonus' => $level->getBonus(),
         'category' => $category->getCategory(),
         'owner' => $owner,
-        'completed' => $completed_by,
+        'completed' => $completed,
         'hint' => $hint,
         'hint_cost' => $hint_cost,
         'attachments' => $attachments_list,

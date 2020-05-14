@@ -35,9 +35,10 @@ DROP TABLE IF EXISTS `levels`;
 CREATE TABLE `levels` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `active` tinyint(1) NOT NULL,
-  `type` varchar(4) NOT NULL,
+  `type` varchar(7) NOT NULL,
   `title` varchar(255) NOT NULL DEFAULT '',
   `description` text NOT NULL,
+  `choices` text NULL,
   `entity_id` int(11) NOT NULL,
   `category_id` int(11) NOT NULL,
   `points` int(11) NOT NULL,
@@ -73,6 +74,7 @@ CREATE TABLE `categories` (
 LOCK TABLES `categories` WRITE;
 INSERT INTO `categories` (category, created_ts, protected) VALUES("None", NOW(), 1);
 INSERT INTO `categories` (category, created_ts, protected) VALUES("Quiz", NOW(), 1);
+INSERT INTO `categories` (category, created_ts, protected) VALUES("Multiple Choice", NOW(), 1);
 UNLOCK TABLES;
 
 --
@@ -286,10 +288,7 @@ CREATE TABLE `password_types` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 LOCK TABLES `password_types` WRITE;
-INSERT INTO `password_types` (field, value, description) VALUES("1", "/.+/", "Length > 0");
-INSERT INTO `password_types` (field, value, description) VALUES("2", "/.*^(?=.{8,})(?=.*[a-z])(?=.*[0-9]).*$/", "Length > 8, [a-z] and [0-9]");
-INSERT INTO `password_types` (field, value, description) VALUES("3", "/.*^(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$/", "Length > 8, [a-z], [A-Z] and [0-9]");
-INSERT INTO `password_types` (field, value, description) VALUES("4", "/.*^(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[\\W]+).*$/", "Length > 8, [a-z], [A-Z], [0-9] and Special chars");
+INSERT INTO `password_types` (field, value, description) VALUES("1", "/.*^(?=.{12,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$/", "Length >= 12, [a-z], [A-Z] and [0-9]");
 
 UNLOCK TABLES;
 
@@ -344,7 +343,7 @@ CREATE TABLE `scores_log` (
   `team_id` int(11) NOT NULL,
   `points` int(11) NOT NULL,
   `level_id` int(11) NOT NULL,
-  `type` varchar(4) NOT NULL,
+  `type` varchar(7) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `level_id` (`level_id`),
   KEY `team_id` (`team_id`)
