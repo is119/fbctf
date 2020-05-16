@@ -1,6 +1,6 @@
 window.jQuery = require('jquery');
 var $ = window.jQuery;
-require('bxslider');
+require('./bxslider');
 
 module.exports = {
   init: function() {

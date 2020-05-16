@@ -11,6 +11,8 @@ class GameAjaxController extends AjaxController {
         'livesync_username' => FILTER_UNSAFE_RAW,
         'livesync_password' => FILTER_UNSAFE_RAW,
         'team_name' => FILTER_UNSAFE_RAW,
+        'team_password' => FILTER_UNSAFE_RAW,
+        'new_password' => FILTER_UNSAFE_RAW,
         'action' => array(
           'filter' => FILTER_VALIDATE_REGEXP,
           'options' => array('regexp' => '/^[\w-]+$/'),
@@ -62,8 +64,9 @@ class GameAjaxController extends AjaxController {
             // Give points and update last score for team
             $check_answered = await Level::genScoreLevel($level_id, SessionUtils::sessionTeam());
             if (!$check_answered) {
-              return Utils::ok_response('Double score for you! SIKE!', 'game');
+              return Utils::error_response('MChoice Failed', 'game');
             }
+            MultiTeam::invalidateMCRecords();
             return Utils::ok_response('Success', 'game');
           } else {
             await FailureLog::genLogFailedScore(
@@ -71,6 +74,14 @@ class GameAjaxController extends AjaxController {
               SessionUtils::sessionTeam(),
               $answer,
             );
+            $level = await Level::gen($level_id);
+            $type = $level->getType();
+            if ($type === "mchoice") {
+              await \HH\Asio\va(
+                Level::genScoreLevel($level_id, SessionUtils::sessionTeam(), false)
+              );
+              return Utils::error_response('MChoice Failed', 'game');
+            }
             return Utils::error_response('Failed', 'game');
           }
         } else {
@@ -98,6 +109,35 @@ class GameAjaxController extends AjaxController {
         );
         if ($updated_team_name === true) {
           return Utils::ok_response('Success', 'game');
+        } else {
+          return Utils::error_response('Failed', 'game');
+        }
+      case 'set_team_password':
+        $team_id = SessionUtils::sessionTeam();
+        $new_pw = must_have_string($params, 'new_password');
+        $verify = await Team::genVerifyCredentials(
+          $team_id,
+          must_have_string($params, 'team_password')
+        );
+        $strong_pw = await Configuration::gen('login_strongpasswords');
+        $pw_pass = true;
+        
+        if ($strong_pw->getValue() !== '0') {
+          $password_type = await Configuration::genCurrentPasswordType();
+          if (!preg_match(strval($password_type->getValue()), $new_pw)) {
+            $pw_pass = false;
+          }
+        }
+
+        if ($verify !== null && $new_pw !== '' && $pw_pass) {
+          $password_hash =
+            Team::generateHash($new_pw);
+          await Team::genUpdateTeamPassword($password_hash, $team_id);
+          return Utils::ok_response('Success', 'game');
+        } elseif ($verify !== null && $new_pw === '') {
+          return Utils::error_response('PW Error', 'game');
+        } elseif ($verify !== null && !$pw_pass) {
+          return Utils::error_response('Password too simple', 'game');
         } else {
           return Utils::error_response('Failed', 'game');
         }

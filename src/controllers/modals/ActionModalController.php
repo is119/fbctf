@@ -139,6 +139,24 @@ class ActionModalController extends ModalController {
             </div>
           </div>;
         return tuple($title, $content);
+      case 'hint-confirm':
+        $title =
+          <h4>
+            hint_<span class="highlighted">Confirmation</span>
+          </h4>;
+        $content =
+          <div class="action-main">
+            <p class="hint-confirmed">Are you sure you want to use a hint? Points will be taken off your total score!</p>
+            <div class="action-actionable">
+              <a href="#" id="hint_cancel" class="fb-cta cta--red js-close-modal">
+                {tr('No')}
+              </a>
+              <a href="#" id="hint_confirm" class="fb-cta cta--yellow">
+                {tr('Yes')}
+              </a>
+            </div>
+          </div>;
+        return tuple($title, $content);
       case 'save':
         $title =
           <h4>
@@ -287,7 +305,7 @@ class ActionModalController extends ModalController {
               <a
                 name="facebook-oauth-button"
                 href="#"
-                class="fb-cta cta--yellowe">
+                class="fb-cta cta--yellow">
                 {tr($button_text)}<br />{tr('Account Is Linked')}
               </a>;
           }
@@ -329,7 +347,7 @@ class ActionModalController extends ModalController {
               <a
                 name="google-oauth-button"
                 href="#"
-                class="fb-cta cta--yellowe">
+                class="fb-cta cta--yellow">
                 {tr($button_text)}<br />{tr('Account Is Linked')}
               </a>;
           }
@@ -357,8 +375,8 @@ class ActionModalController extends ModalController {
         $team_name = $team->getName();
 
         $content =
-          <div class="action-main">
-            {tr('Change your team name.')}
+          <div class="action-main" style="height: 600px; overflow-y: scroll">
+            {tr('Change your team name.')} (Max 20 characters)
             <form class="fb-form-no-padding team-name-form">
               <input name="set_team_name" type="hidden" value="" />
               <div class="form-el el--text">
@@ -368,6 +386,7 @@ class ActionModalController extends ModalController {
                   type="text"
                   value={$team_name}
                   autocomplete="off"
+                  maxlength={20}
                 />
                 <input
                   type="hidden"
@@ -375,6 +394,7 @@ class ActionModalController extends ModalController {
                   value={SessionUtils::CSRFToken()}
                 />
               </div>
+              <span class="team-name-form-response highlighted--blue"></span>
               <div class="action-actionable">
                 <a
                   class=
@@ -382,9 +402,67 @@ class ActionModalController extends ModalController {
                   {tr('Update')}
                 </a>
               </div>
-              <br />
-              <span class="team-name-form-response highlighted--blue"></span>
             </form>
+            <br />
+            <form class="team-password-form">
+              Change your password.
+              <br />
+              <div style="margin-top: 10px">
+                <div style="float:left; width: 25%">
+                  Current:
+                </div>
+                <div style="float:left; width: 75%">
+                  <input
+                    placeholder="Current password"
+                    name="current_password"
+                    type="password"
+                    autocomplete="off"
+                    size={54}
+                  /><br />
+                  <span class="pw-error" style="visibility: hidden">&nbsp</span>
+                </div>
+              </div>
+              <div style="margin-top: 10px">
+                <div style="float: left; width: 25%">
+                  New:
+                </div>
+                <div style="float: left; width: 75%">
+                  <input
+                    placeholder="New password"
+                    name="new_password"
+                    type="password"
+                    autocomplete="off"
+                    size={54}
+                  /><br />
+                  <span class="newpw-error" style="visibility: hidden">Enter new password</span>
+                </div>
+              </div>
+              <div style="margin-top: 10px">
+                <div style="float: left; width: 25%">
+                  Re-type new:
+                </div>
+                <div style="float: left; width: 75%">
+                  <input
+                    placeholder="Re-type password"
+                    name="confirm_password"
+                    type="password"
+                    autocomplete="off"
+                    size={54}
+                  /><br />
+                  <span class="confirm-pw" style="visibility: hidden">Password does not match</span>
+                </div>
+                <span class="highlighted--blue pw-updated" style="display: none">Password Updated</span>
+                <span class="highlighted--blue strong-pw" style="display: none">Password required: Length >= 12, [a-z], [A-Z] and [0-9]</span>
+              </div>
+              <div class="action-actionable">
+                <a
+                  class=
+                    "fb-cta cta--yellow js-trigger-account-team-password-save">
+                  {tr('Update')}
+                </a>
+              </div>
+            </form>
+            
             {$oauth_header}
             <div class="fb-column-container">
               <div class="col col-pad col-1-2">
@@ -449,7 +527,7 @@ class ActionModalController extends ModalController {
       <div class="fb-modal-content">
         <header class="modal-title">
           {$title}
-          <a href="#" class="js-close-modal">
+          <a href="#" id="hint_close" class="js-close-modal">
             <svg class="icon icon--close">
               <use href="#icon--close" />
             </svg>

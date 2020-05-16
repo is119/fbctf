@@ -217,24 +217,6 @@ class Team extends Model implements Importable, Exportable {
     }
   }
 
-  // Check to see if the team is active.
-  public static async function genCheckTeamStatus(
-    int $team_id,
-  ): Awaitable<bool> {
-    $db = await self::genDb();
-    $result = await $db->queryf(
-      'SELECT COUNT(*) FROM teams WHERE id = %d AND active = 1 LIMIT 1',
-      $team_id,
-    );
-
-    if ($result->numRows() > 0) {
-      invariant($result->numRows() === 1, 'Expected exactly one result');
-      return (intval(idx($result->mapRows()[0], 'COUNT(*)')) > 0);
-    } else {
-      return false;
-    }
-  }
-
   // Create a team and return the created team id.
   public static async function genCreate(
     string $name,
@@ -377,7 +359,6 @@ class Team extends Model implements Importable, Exportable {
     );
     Logo::invalidateMCRecords();
     MultiTeam::invalidateMCRecords(); // Invalidate Memcached MultiTeam data.
-    ActivityLog::invalidateMCRecords('ALL_ACTIVITY'); // Invalidate Memcached ActivityLog data.
   }
 
   // Update team password.
@@ -421,14 +402,9 @@ class Team extends Model implements Importable, Exportable {
       sprintf('DELETE FROM scores_log WHERE team_id = %d', $team_id),
       sprintf('DELETE FROM hints_log WHERE team_id = %d', $team_id),
       sprintf('DELETE FROM failures_log WHERE team_id = %d', $team_id),
-      sprintf(
-        'DELETE FROM activity_log WHERE subject = "Team:%d"',
-        $team_id,
-      ),
     };
     await $db->multiQuery($queries);
     MultiTeam::invalidateMCRecords(); // Invalidate Memcached MultiTeam data.
-    ActivityLog::invalidateMCRecords('ALL_ACTIVITY'); // Invalidate Memcached ActivityLog data.
     ScoreLog::invalidateMCRecords(); // Invalidate Memcached ScoreLog data.
     HintLog::invalidateMCRecords(); // Invalidate Memcached ScoreLog data.
     await Session::genDeleteByTeam($team_id);
@@ -442,7 +418,7 @@ class Team extends Model implements Importable, Exportable {
 
     $team_name = trim($team_name);
 
-    if ($team_name === '') {
+    if ($team_name === '' || strlen($team_name) > 20) {
       return false;
     }
 
@@ -464,7 +440,6 @@ class Team extends Model implements Importable, Exportable {
       MultiTeam::invalidateMCRecords('ALL_VISIBLE_TEAMS');
       MultiTeam::invalidateMCRecords('TEAMS_BY_LOGO');
       ScoreLog::invalidateMCRecords(); // Invalidate Memcached ScoreLog data.
-      ActivityLog::invalidateMCRecords(); // Invalidate Memcached ActivityLog data.
       return true;
     }
   }
@@ -540,7 +515,6 @@ class Team extends Model implements Importable, Exportable {
       $team_id,
     );
     MultiTeam::invalidateMCRecords(); // Invalidate Memcached MultiTeam data.
-    ActivityLog::invalidateMCRecords('ALL_ACTIVITY'); // Invalidate Memcached ActivityLog data.
   }
 
   // Check if a team name is already created.
@@ -550,30 +524,13 @@ class Team extends Model implements Importable, Exportable {
     $db = await self::genDb();
 
     $result = await $db->queryf(
-      'SELECT COUNT(*) FROM teams WHERE name = %s',
+      'SELECT EXISTS(SELECT * FROM teams WHERE name = %s)',
       $team_name,
     );
 
     if ($result->numRows() > 0) {
       invariant($result->numRows() === 1, 'Expected exactly one result');
-      return (intval(idx($result->mapRows()[0], 'COUNT(*)')) > 0);
-    } else {
-      return false;
-    }
-  }
-
-  // Check if a team name is already created.
-  public static async function genTeamExistById(
-    int $team_id,
-  ): Awaitable<bool> {
-    $db = await self::genDb();
-
-    $result =
-      await $db->queryf('SELECT COUNT(*) FROM teams WHERE id = %d', $team_id);
-
-    if ($result->numRows() > 0) {
-      invariant($result->numRows() === 1, 'Expected exactly one result');
-      return (intval(idx($result->mapRows()[0], 'COUNT(*)')) > 0);
+      return intval($result->mapRows()[0]->firstValue()) > 0;
     } else {
       return false;
     }
@@ -708,32 +665,11 @@ class Team extends Model implements Importable, Exportable {
     return (intval($value['points']) === intval($value['sum']));
   }
 
-  // Update the last_score field.
-  public static async function genLastScore(int $team_id): Awaitable<void> {
-    $db = await self::genDb();
-    await $db->queryf(
-      'UPDATE teams SET last_score = NOW() WHERE id = %d LIMIT 1',
-      $team_id,
-    );
-    MultiTeam::invalidateMCRecords(); // Invalidate Memcached MultiTeam data.
-  }
-
   // Set all points to zero for all teams.
   public static async function genResetAllPoints(): Awaitable<void> {
     $db = await self::genDb();
     await $db->queryf('UPDATE teams SET points = 0 WHERE id > 0');
     MultiTeam::invalidateMCRecords(); // Invalidate Memcached MultiTeam data.
-    ActivityLog::invalidateMCRecords('ALL_ACTIVITY'); // Invalidate Memcached ActivityLog data.
-  }
-
-  // Teams total number.
-  public static async function genTeamsCount(): Awaitable<int> {
-    $db = await self::genDb();
-
-    $result = await $db->queryf('SELECT COUNT(*) AS count FROM teams');
-
-    invariant($result->numRows() === 1, 'Expected exactly one result');
-    return intval(idx($result->mapRows()[0], 'COUNT(*)'));
   }
 
   public static async function genFirstCapture(
@@ -792,7 +728,6 @@ class Team extends Model implements Importable, Exportable {
       $team_id,
     );
     MultiTeam::invalidateMCRecords(); // Invalidate Memcached MultiTeam data.
-    Control::invalidateMCRecords('ALL_ACTIVITY'); // Invalidate Memcached Control data.
   }
 
   public static async function genAuthTokenExists(

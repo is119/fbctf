@@ -53,7 +53,7 @@ function package() {
 
 function install_unison() {
   cd /
-  dl_pipe "https://www.archlinux.org/packages/extra/x86_64/unison/download/" | sudo tar Jx
+  dl_pipe "https://www.archlinux.org/packages/extra/x86_64/unison/download/" | zstd -d | sudo tar x
 }
 
 function repo_osquery() {
@@ -132,14 +132,14 @@ function letsencrypt_cert() {
     cat <<- EOF > /root/tmp/certbot.sh
 		#!/bin/bash
 		if [[ ! ( -d /etc/letsencrypt && "\$(ls -A /etc/letsencrypt)" ) ]]; then
-		    /usr/bin/certbot-auto certonly -n --agree-tos --standalone --standalone-supported-challenges tls-sni-01 -m "$__myemail" -d "$__mydomain"
+		    /usr/bin/certbot-auto certonly -n --agree-tos --standalone -m "$__myemail" -d "$__mydomain"
 		fi
 		sudo ln -sf "/etc/letsencrypt/live/$__mydomain/fullchain.pem" "$1"
 		sudo ln -sf "/etc/letsencrypt/live/$__mydomain/privkey.pem" "$2"
 EOF
     sudo chmod +x /root/tmp/certbot.sh
   else
-    /usr/bin/certbot-auto certonly -n --agree-tos --standalone --standalone-supported-challenges tls-sni-01 -m "$__myemail" -d "$__mydomain"
+    /usr/bin/certbot-auto certonly -n --agree-tos --standalone -m "$__myemail" -d "$__mydomain"
     sudo ln -s "/etc/letsencrypt/live/$__mydomain/fullchain.pem" "$1" || true
     sudo ln -s "/etc/letsencrypt/live/$__mydomain/privkey.pem" "$2" || true
   fi
@@ -286,8 +286,8 @@ function install_composer() {
 }
 
 function install_nodejs() {
-  log "Downloading and setting node.js version 6.x repo information"
-  dl_pipe "https://deb.nodesource.com/setup_6.x" | sudo -E bash -
+  log "Downloading and setting node.js version 8.x repo information"
+  dl_pipe "https://deb.nodesource.com/setup_8.x" | sudo -E bash -
 
   log "Installing node.js"
   package nodejs
@@ -417,13 +417,19 @@ function quick_setup() {
   elif [[ "$__type" = "install_multi_cache" ]]; then
     ./extra/provision.sh -m $__mode -s $PWD --multiple-servers --server-type cache
   elif [[ "$__type" = "start_docker" ]]; then
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
     package_repo_update
     package docker-ce
     sudo docker build --build-arg MODE=$__mode -t="fbctf-image" .
-    sudo docker run --name fbctf -p 80:80 -p 443:443 fbctf-image
+    sudo docker run -d --name fbctf -p 80:80 -p 443:443 fbctf-image
   elif [[ "$__type" = "start_docker_multi" ]]; then
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
     package_repo_update
-    package python-pip
+    package docker-ce
+    package python
+    curl https://bootstrap.pypa.io/get-pip.py | sudo python3
     sudo pip install docker-compose
     if [[ "$__mode" = "prod" ]]; then
       sed -i -e 's|      #  MODE: prod|        MODE: prod|g' ./docker-compose.yml
@@ -432,7 +438,7 @@ function quick_setup() {
       sed -i -e 's|        MODE: prod|      #  MODE: prod|g' ./docker-compose.yml
       sed -i -e 's|      args|      #args|g' ./docker-compose.yml
     fi
-    sudo docker-compose up
+    sudo docker-compose up -d
   elif [[ "$__type" = "start_vagrant" ]]; then
     cp Vagrantfile-single Vagrantfile
     export FBCTF_PROVISION_ARGS="-m $__mode"
@@ -443,4 +449,3 @@ function quick_setup() {
     vagrant up
   fi
 }
-

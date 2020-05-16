@@ -27,6 +27,7 @@ class AdminController extends Controller {
       'controls',
       'announcements',
       'quiz',
+      'mchoice',
       'flags',
       'bases',
       'categories',
@@ -81,6 +82,9 @@ class AdminController extends Controller {
       if ($category->getCategory() === 'Quiz') {
         continue;
       }
+      if ($category->getCategory() === 'Multiple Choice') {
+        continue;
+      }
 
       if ($category->getId() === $selected) {
         $select->appendChild(
@@ -114,6 +118,9 @@ class AdminController extends Controller {
     );
     foreach ($categories as $category) {
       if ($category->getCategory() === 'Quiz') {
+        continue;
+      }
+      if ($category->getCategory() === 'Multiple Choice') {
         continue;
       }
       $select->appendChild(
@@ -251,7 +258,7 @@ class AdminController extends Controller {
         $team = await MultiTeam::genTeam($token->getTeamId()); // TODO: Combine Awaits
         $token_status =
           <span class="highlighted--red">
-            {tr('Used by')} {$team->getName()}
+            {tr('Used by')}&nbsp;{$team->getName()}
           </span>;
       } else {
         $token_status =
@@ -410,11 +417,11 @@ class AdminController extends Controller {
     if ($start_ts->getValue() !== '0' && $start_ts->getValue() !== 'NaN') {
       $game_start_ts = $start_ts->getValue();
       $game_start_array = array();
-      $game_start_array['year'] = gmdate('Y', $game_start_ts);
-      $game_start_array['mon'] = gmdate('m', $game_start_ts);
-      $game_start_array['mday'] = gmdate('d', $game_start_ts);
-      $game_start_array['hours'] = gmdate('H', $game_start_ts);
-      $game_start_array['minutes'] = gmdate('i', $game_start_ts);
+      $game_start_array['year'] = date('Y', $game_start_ts);
+      $game_start_array['mon'] = date('m', $game_start_ts);
+      $game_start_array['mday'] = date('d', $game_start_ts);
+      $game_start_array['hours'] = date('H', $game_start_ts);
+      $game_start_array['minutes'] = date('i', $game_start_ts);
     } else {
       $game_start_ts = '0';
       $game_start_array['year'] = '0';
@@ -428,11 +435,11 @@ class AdminController extends Controller {
     if ($end_ts->getValue() !== '0' && $end_ts->getValue() !== 'NaN') {
       $game_end_ts = $end_ts->getValue();
       $game_end_array = array();
-      $game_end_array['year'] = gmdate('Y', $game_end_ts);
-      $game_end_array['mon'] = gmdate('m', $game_end_ts);
-      $game_end_array['mday'] = gmdate('d', $game_end_ts);
-      $game_end_array['hours'] = gmdate('H', $game_end_ts);
-      $game_end_array['minutes'] = gmdate('i', $game_end_ts);
+      $game_end_array['year'] = date('Y', $game_end_ts);
+      $game_end_array['mon'] = date('m', $game_end_ts);
+      $game_end_array['mday'] = date('d', $game_end_ts);
+      $game_end_array['hours'] = date('H', $game_end_ts);
+      $game_end_array['minutes'] = date('i', $game_end_ts);
     } else {
       $game_end_ts = '0';
       $game_end_array['year'] = '0';
@@ -453,7 +460,7 @@ class AdminController extends Controller {
         date(tr('date and time format'), $start_ts->getValue());
       $timer_end_ts = date(tr('date and time format'), $end_ts->getValue());
       $game_schedule_reset_text = tr('Game Running');
-      $game_schedule_reset_class = 'fb-cta cta--yellowe';
+      $game_schedule_reset_class = 'fb-cta cta--yellow';
       $game_schedule_reset_action = '';
     }
 
@@ -1033,6 +1040,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_start_array['year'])}
                         name="fb--schedule--start_year"
+                        tabindex="1"
                       />
                     </div>
                     <div class="form-el el--block-label el--full-text">
@@ -1041,6 +1049,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_end_array['year'])}
                         name="fb--schedule--end_year"
+                        tabindex="6"
                       />
                     </div>
                   </div>
@@ -1051,6 +1060,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_start_array['mon'])}
                         name="fb--schedule--start_month"
+                        tabindex="2"
                       />
                     </div>
                     <div class="form-el el--block-label el--full-text">
@@ -1059,6 +1069,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_end_array['mon'])}
                         name="fb--schedule--end_month"
+                        tabindex="7"
                       />
                     </div>
                   </div>
@@ -1069,6 +1080,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_start_array['mday'])}
                         name="fb--schedule--start_day"
+                        tabindex="3"
                       />
                     </div>
                     <div class="form-el el--block-label el--full-text">
@@ -1077,6 +1089,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_end_array['mday'])}
                         name="fb--schedule--end_day"
+                        tabindex="8"
                       />
                     </div>
                   </div>
@@ -1087,6 +1100,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_start_array['hours'])}
                         name="fb--schedule--start_hour"
+                        tabindex="4"
                       />
                     </div>
                     <div class="form-el el--block-label el--full-text">
@@ -1095,6 +1109,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_end_array['hours'])}
                         name="fb--schedule--end_hour"
+                        tabindex="9"
                       />
                     </div>
                   </div>
@@ -1105,6 +1120,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_start_array['minutes'])}
                         name="fb--schedule--start_min"
+                        tabindex="5"
                       />
                     </div>
                     <div class="form-el el--block-label el--full-text">
@@ -1113,6 +1129,7 @@ class AdminController extends Controller {
                         type="number"
                         value={strval($game_end_array['minutes'])}
                         name="fb--schedule--end_min"
+                        tabindex="10"
                       />
                     </div>
                   </div>
@@ -1953,6 +1970,403 @@ class AdminController extends Controller {
         <div class="admin-buttons">
           <button class="fb-cta" data-action="add-new">
             {tr('Add Quiz Level')}
+          </button>
+        </div>
+      </div>;
+  }
+
+    public async function genRenderMChoiceContent(): Awaitable<:xhp> {
+    $countries_select = await $this->genGenerateCountriesSelect(0);
+    $adminsections =
+      <div class="admin-sections">
+        <section
+          id="new-element"
+          class="validate-form admin-box completely-hidden">
+          <form class="level_form mchoice_form" name="newlvl">
+            <input type="hidden" name="level_type" value="mchoice" />
+            <input type="hidden" name="level_id" value="" />
+            <header class="admin-box-header">
+              <h3>New Multiple Choice Level</h3>
+            </header>
+            <div class="fb-column-container">
+              <div class="col col-pad col-1-2">
+                <div
+                  class=
+                    "form-el form-el--required el--block-label el--full-text">
+                  <label>{tr('Title')}</label>
+                  <input
+                    name="title"
+                    type="text"
+                    placeholder={tr('Level title')}
+                  />
+                </div>
+                <div
+                  class=
+                    "form-el form-el--required el--block-label el--full-text">
+                  <label>{tr('Question')}</label>
+                  <textarea
+                    name="question"
+                    placeholder={tr('Multiple Choice question')}
+                    rows={4}>
+                  </textarea>
+                </div>
+                <div
+                  class=
+                    "form-el form-el--required el--block-label el--full-text radio-list">
+                  <h6>Choices</h6>
+                  <label class="mcontainer">
+                    <input id="mchoice0" name="answer" type="radio" value="0" checked={true}/>A
+                    <span class="mradio"></span>
+                  </label>
+                  <input
+                    name="choice0"
+                    type="text"
+                    value=""
+                    disabled={true}
+                  />
+                  
+                  <label class="mcontainer">
+                    <input id="mchoice1" name="answer" type="radio" value="1"/>B
+                    <span class="mradio"></span>
+                  </label>
+                  <input
+                    name="choice1"
+                    type="text"
+                    value=""
+                    disabled={true}
+                  />
+                  
+                  <label class="mcontainer">
+                    <input id="mchoice2" name="answer" type="radio" value="2"/>C
+                    <span class="mradio"></span>
+                  </label>                  
+                  <input
+                    name="choice2"
+                    type="text"
+                    value=""
+                    disabled={true}
+                  />
+                  
+                  <label class="mcontainer">
+                    <input id="mchoice3" name="answer" type="radio" value="3"/>D
+                     <span class="mradio"></span>
+                  </label>
+                  <input
+                    name="choice3"
+                    type="text"
+                    value=""
+                    disabled={true}
+                  />
+                  
+                </div>
+              </div>
+              <div class="col col-pad col-1-2">
+                <div class="form-el fb-column-container col-gutters">
+                  <div
+                    class=
+                      "form-el--required col col-1-3 el--block-label el--full-text">
+                    <label>{tr('Points')}</label>
+                    <input name="points" type="text" />
+                  </div>
+                </div>
+                <div class="form-el fb-column-container col-gutters">
+                  <div class="col col-2-3 el--block-label el--full-text">
+                    <label>{tr('Hint')}</label>
+                    <input name="hint" type="text" />
+                  </div>
+                  <div class="col col-1-3 el--block-label el--full-text">
+                    <label>{tr('Hint Penalty')}</label>
+                    <input name="penalty" type="text" />
+                  </div>
+                </div>
+                <div class="form-el el--block-label el--full-text">
+                  <label for="">{tr('Country')}</label>
+                  {$countries_select}
+                </div>
+              </div>
+            </div>
+            <div class="admin-buttons admin-row">
+              <div class="button-right">
+                <a href="#" class="admin--edit" data-action="edit">
+                  {tr('EDIT')}
+                </a>
+                <button class="fb-cta cta--red" data-action="delete">
+                  {tr('Delete')}
+                </button>
+                <button class="fb-cta cta--yellow" data-action="create">
+                  {tr('Create')}
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+        <section id="new-element" class="admin-box">
+          <header class="admin-box-header">
+            <h3>All Multiple Choice Levels</h3>
+            <form class="all_mchoice_form">
+              <div class="admin-section-toggle radio-inline col">
+                <input
+                  type="radio"
+                  name="fb--levels--all_mchoice"
+                  id="fb--levels--all_mchoice--on"
+                />
+                <label for="fb--levels--all_mchoice--on">{tr('On')}</label>
+                <input
+                  type="radio"
+                  name="fb--levels--all_mchoice"
+                  id="fb--levels--all_mchoice--off"
+                />
+                <label for="fb--levels--all_mchoice--off">{tr('Off')}</label>
+              </div>
+            </form>
+          </header>
+          <header class="admin-box-header">
+            <h3>{tr('Filter By:')}</h3>
+            <div class="form-el fb-column-container col-gutters">
+              <div class="col col-1-5 el--block-label el--full-text"></div>
+              <div class="col col-1-5 el--block-label el--full-text">
+                <select class="not_configuration" name="status_filter">
+                  <option class="filter_option" value="all">
+                    {tr('All Status')}
+                  </option>
+                  <option class="filter_option" value="Enabled">
+                    {tr('Enabled')}
+                  </option>
+                  <option class="filter_option" value="Disabled">
+                    {tr('Disabled')}
+                  </option>
+                </select>
+              </div>
+              <div class="col col-1-5 el--block-label el--full-text"></div>
+              <div class="col col-1-5 el--block-label el--full-text"></div>
+              <div class="col col-1-5 el--block-label el--full-text"></div>
+            </div>
+          </header>
+        </section>
+      </div>;
+
+    $c = 1;
+    $mchoices = await Level::genAllMChoiceLevels();
+    foreach ($mchoices as $mchoice) {
+      $mchoice_active_on = ($mchoice->getActive());
+      $mchoice_active_off = (!$mchoice->getActive());
+      $flag = $mchoice->getFlag();
+
+      $mchoice_status_name =
+        'fb--levels--level-'.strval($mchoice->getId()).'-status';
+      $mchoice_status_on_id =
+        'fb--levels--level-'.strval($mchoice->getId()).'-status--on';
+      $mchoice_status_off_id =
+        'fb--levels--level-'.strval($mchoice->getId()).'-status--off';
+
+      $mchoice_id = strval($mchoice->getId());
+      $mchoice_id_txt = 'mchoice_id'.strval($mchoice->getId());
+
+      $countries_select =
+        await $this->genGenerateCountriesSelect($mchoice->getEntityId()); // TODO: Combine Awaits
+
+      $delete_button =
+        <div style="display: inline">
+          <input type="hidden" name="level_id" value={$mchoice_id} />
+          <a
+            href="#"
+            class="fb-cta cta--red js-delete-level"
+            style="margin-right: 20px">
+            {tr('Delete')}
+          </a>
+        </div>;
+
+      $adminsections->appendChild(
+        <section class="admin-box validate-form section-locked">
+          <form class="level_form mchoice_form" name={$mchoice_id_txt}>
+            <input type="hidden" name="level_type" value="mchoice" />
+            <input
+              type="hidden"
+              name="level_id"
+              value={strval($mchoice->getId())}
+            />
+            <header class="admin-box-header">
+              <h3>Multiple Choice Level {$c}</h3>
+              <div class="admin-section-toggle radio-inline">
+                <input
+                  type="radio"
+                  name={$mchoice_status_name}
+                  id={$mchoice_status_on_id}
+                  checked={$mchoice_active_on}
+                />
+                <label for={$mchoice_status_on_id}>{tr('On')}</label>
+                <input
+                  type="radio"
+                  name={$mchoice_status_name}
+                  id={$mchoice_status_off_id}
+                  checked={$mchoice_active_off}
+                />
+                <label for={$mchoice_status_off_id}>{tr('Off')}</label>
+              </div>
+            </header>
+            <div class="fb-column-container">
+              <div class="col col-pad col-1-2">
+                <div
+                  class=
+                    "form-el form-el--required el--block-label el--full-text">
+                  <label>{tr('Title')}</label>
+                  <input
+                    name="title"
+                    type="text"
+                    value={$mchoice->getTitle()}
+                    disabled={true}
+                  />
+                </div>
+                <div
+                  class=
+                    "form-el form-el--required el--block-label el--full-text">
+                  <label>{tr('Question')}</label>
+                  <textarea name="question" rows={6} disabled={true}>
+                    {$mchoice->getDescription()}
+                  </textarea>
+                </div>
+                <div
+                  class=
+                    "form-el form-el--required el--block-label el--full-text radio-list">
+                  <h6>Choices</h6>
+                  
+                  <label class="mcontainer">
+                    <input id="mchoice0" name="answer" type="radio" value="0" checked={$flag === '0' ? true : false} disabled={true}/>A
+                    <span class="mradio"></span>
+                  </label>
+                  <input
+                    name="choice0"
+                    type="text"
+                    value={$mchoice->getChoices(0)}
+                    disabled={true}
+                  />
+
+                  <label class="mcontainer">
+                    <input id="mchoice1" name="answer" type="radio" value="1" checked={$flag === '1' ? true : false} disabled={true}/>B
+                    <span class="mradio"></span>
+                  </label>
+                  <input
+                    name="choice1"
+                    type="text"
+                    value={$mchoice->getChoices(1)}
+                    disabled={true}
+                  />
+
+                  <label class="mcontainer">
+                    <input id="mchoice2" name="answer" type="radio" value="2" checked={$flag === '2' ? true : false} disabled={true}/>C
+                    <span class="mradio"></span>
+                  </label>
+                  <input
+                    name="choice2"
+                    type="text"
+                    value={$mchoice->getChoices(2)}
+                    disabled={true}
+                  />
+
+                  <label class="mcontainer">
+                    <input id="mchoice3" name="answer" type="radio" value="3" checked={$flag === '3' ? true : false} disabled={true}/>D
+                    <span class="mradio"></span>
+                  </label>
+                  <input
+                    name="choice3"
+                    type="text"
+                    value={$mchoice->getChoices(3)}
+                    disabled={true}
+                  />
+
+                </div>
+              </div>
+              <div class="col col-pad col-1-2">
+                <div class="form-el fb-column-container col-gutters">
+                  <div
+                    class=
+                      "form-el--required col col-1-3 el--block-label el--full-text">
+                    <label>{tr('Points')}</label>
+                    <input
+                      name="points"
+                      type="text"
+                      value={strval($mchoice->getPoints())}
+                      disabled={true}
+                    />
+                  </div>
+                  <div
+                    class=
+                      "form-el--required col col-1-3 el--block-label el--full-text">
+                    <label>{tr('Bonus')}</label>
+                    <input
+                      name="bonus"
+                      type="text"
+                      value={strval($mchoice->getBonus())}
+                      disabled={true}
+                    />
+                  </div>
+                  <div
+                    class=
+                      "form-el--required col col-1-3 el--block-label el--full-text">
+                    <label>{tr('-Dec')}</label>
+                    <input
+                      name="bonus_dec"
+                      type="text"
+                      value={strval($mchoice->getBonusDec())}
+                      disabled={true}
+                    />
+                  </div>
+                </div>
+                <div class="form-el fb-column-container col-gutters">
+                  <div class="col col-2-3 el--block-label el--full-text">
+                    <label>{tr('Hint')}</label>
+                    <input
+                      name="hint"
+                      type="text"
+                      value={$mchoice->getHint()}
+                      disabled={true}
+                    />
+                  </div>
+                  <div class="col col-1-3 el--block-label el--full-text">
+                    <label>{tr('Hint Penalty')}</label>
+                    <input
+                      name="penalty"
+                      type="text"
+                      value={strval($mchoice->getPenalty())}
+                      disabled={true}
+                    />
+                  </div>
+                </div>
+                <div class="form-el el--block-label el--full-text">
+                  <label for="">{tr('Country')}</label>
+                  {$countries_select}
+                </div>
+              </div>
+            </div>
+            <div class="admin-buttons admin-row">
+              <div class="button-right">
+                <a href="#" class="admin--edit" data-action="edit">
+                  {tr('EDIT')}
+                </a>
+                {$delete_button}
+                <button class="fb-cta cta--yellow" data-action="save">
+                  {tr('Save')}
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+      );
+      $c++;
+    }
+
+    return
+      <div>
+        <header class="admin-page-header">
+          <h3>Multiple Choice Management</h3>
+          <span class="admin-section--status">
+            {tr('status_')}<span class="highlighted">{tr('OK')}</span>
+          </span>
+        </header>
+        {$adminsections}
+        <div class="admin-buttons">
+          <button class="fb-cta" data-action="add-new">
+            Add Multiple Choice Level
           </button>
         </div>
       </div>;
@@ -3130,16 +3544,16 @@ class AdminController extends Controller {
 
     $all_countries = await Country::genAllCountries();
     foreach ($all_countries as $country) {
-      $using_country = await Level::genWhoUses($country->getId()); // TODO: Combine Awaits
+      $using_country = $country->getUsed();
       $current_use = ($using_country) ? tr('Yes') : tr('No');
       if ($country->getEnabled()) {
         $highlighted_action = 'disable_country';
         $highlighted_color = 'highlighted--red country-enabled';
-        $current_status = 'Disabled';
+        $current_status = 'Disable';
       } else {
         $highlighted_action = 'enable_country';
         $highlighted_color = 'highlighted--green country-disabled';
-        $current_status = 'Enabled';
+        $current_status = 'Enable';
       }
 
       if (!$using_country) {
@@ -4162,6 +4576,11 @@ class AdminController extends Controller {
               </a>
             </li>
             <li>
+              <a href="/index.php?p=admin&page=mchoice">
+                {tr('Levels')}: Mutiple Choice
+              </a>
+            </li>
+            <li>
               <a href="/index.php?p=admin&page=quiz">
                 {tr('Levels')}: {tr('Quiz')}
               </a>
@@ -4234,6 +4653,9 @@ class AdminController extends Controller {
         break;
       case 'quiz':
         return await $this->genRenderQuizContent();
+        break;
+      case 'mchoice':
+        return await $this->genRenderMChoiceContent();
         break;
       case 'flags':
         return await $this->genRenderFlagsContent();
